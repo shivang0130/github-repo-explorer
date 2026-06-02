@@ -41,7 +41,13 @@ export const fetchGitHubData =
 
     const repoResponse =
       await axios.get<GitHubRepo[]>(
-        `https://api.github.com/users/${username}/repos`
+        `https://api.github.com/users/${username}/repos`,
+        {
+          params: {
+            per_page: 100,
+            sort: "updated",
+          },
+        }
       );
 
     const data = {

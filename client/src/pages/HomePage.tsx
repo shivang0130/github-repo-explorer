@@ -24,6 +24,8 @@ type SearchSource =
 const RECENT_SEARCHES_KEY =
   "recentSearches";
 
+const REPOS_PER_PAGE = 10;
+
 function HomePage() {
   const [data, setData] =
     useState<GitHubResponse | null>(
@@ -48,6 +50,9 @@ function HomePage() {
 
   const [recentSearches, setRecentSearches] =
     useState<string[]>([]);
+  
+    const [visibleRepos, setVisibleRepos] =
+  useState(REPOS_PER_PAGE);
 
   useEffect(() => {
     const savedSearches =
@@ -83,6 +88,10 @@ function HomePage() {
         );
 
       setData(response);
+
+setVisibleRepos(
+  REPOS_PER_PAGE
+);
 
       setRecentSearches((prev) => {
         const updated = [
@@ -158,6 +167,13 @@ function HomePage() {
       data?.repos,
       sortBy,
     ]);
+
+
+    const displayedRepos =
+  sortedRepos.slice(
+    0,
+    visibleRepos
+  );
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -325,9 +341,56 @@ function HomePage() {
 
             </div>
 
-            <RepositoryList
-              repos={sortedRepos}
-            />
+     
+  <RepositoryList
+    repos={displayedRepos}
+  />
+
+  <div className="mt-8">
+
+    <p className="text-center text-gray-500 mb-4">
+      Showing{" "}
+      {Math.min(
+        visibleRepos,
+        sortedRepos.length
+      )}{" "}
+      of{" "}
+      {sortedRepos.length}{" "}
+      repositories
+    </p>
+
+    {visibleRepos <
+      sortedRepos.length && (
+
+      <div className="flex justify-center">
+
+        <button
+          onClick={() =>
+            setVisibleRepos(
+              (prev) =>
+                prev +
+                REPOS_PER_PAGE
+            )
+          }
+          className="
+            bg-slate-900
+            text-white
+            px-6
+            py-3
+            rounded-xl
+            hover:bg-black
+            transition
+          "
+        >
+          Load More
+        </button>
+
+      </div>
+
+    )}
+
+  </div>
+
           </>
         )}
 
