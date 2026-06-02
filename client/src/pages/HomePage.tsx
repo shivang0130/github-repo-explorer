@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 import SearchBar from "../components/SearchBar";
 import ProfileCard from "../components/ProfileCard";
 import RepositoryList from "../components/RepositoryList";
+import RecentSearches from "../components/RecentSearches";
 
 import { getGitHubProfile } from "../api/githubApi";
 
@@ -10,6 +11,18 @@ import type {
   GitHubResponse,
   GitHubRepo,
 } from "../types/github.types";
+
+type SortOption =
+  | "stars"
+  | "name"
+  | "updated";
+
+type SearchSource =
+  | "manual"
+  | "recent";
+
+const RECENT_SEARCHES_KEY =
+  "recentSearches";
 
 function HomePage() {
   const [data, setData] =
@@ -24,7 +37,38 @@ function HomePage() {
     useState("");
 
   const [sortBy, setSortBy] =
-    useState("stars");
+    useState<SortOption>(
+      "stars"
+    );
+
+  const [searchSource, setSearchSource] =
+    useState<SearchSource>(
+      "manual"
+    );
+
+  const [recentSearches, setRecentSearches] =
+    useState<string[]>([]);
+
+  useEffect(() => {
+    const savedSearches =
+      localStorage.getItem(
+        RECENT_SEARCHES_KEY
+      );
+
+    if (savedSearches) {
+      setRecentSearches(
+        JSON.parse(savedSearches)
+      );
+    }
+  }, []);
+
+  const clearSearchHistory = () => {
+    localStorage.removeItem(
+      RECENT_SEARCHES_KEY
+    );
+
+    setRecentSearches([]);
+  };
 
   const handleSearch = async (
     username: string
@@ -39,53 +83,89 @@ function HomePage() {
         );
 
       setData(response);
-    } catch {
-      setData(null);
+
+      setRecentSearches((prev) => {
+        const updated = [
+          username,
+          ...prev.filter(
+            (item) =>
+              item !== username
+          ),
+        ].slice(0, 5);
+
+        localStorage.setItem(
+          RECENT_SEARCHES_KEY,
+          JSON.stringify(updated)
+        );
+
+        return updated;
+      });
+
+    } catch (error: any) {
 
       setError(
-        "GitHub user not found."
+        error?.response?.data
+          ?.message ||
+          "Something went wrong"
       );
+
     } finally {
+
       setLoading(false);
+
     }
   };
 
   const sortedRepos: GitHubRepo[] =
-    data?.repos
-      ? [...data.repos].sort(
-          (a, b) => {
-            switch (sortBy) {
-              case "name":
-                return a.name.localeCompare(
-                  b.name
-                );
+    useMemo(() => {
 
-              case "updated":
-                return (
-                  new Date(
-                    b.updated_at
-                  ).getTime() -
-                  new Date(
-                    a.updated_at
-                  ).getTime()
-                );
+      if (!data?.repos) {
+        return [];
+      }
 
-              case "stars":
-              default:
-                return (
-                  b.stargazers_count -
-                  a.stargazers_count
-                );
-            }
+      return [...data.repos].sort(
+        (a, b) => {
+
+          switch (sortBy) {
+
+            case "name":
+              return a.name.localeCompare(
+                b.name
+              );
+
+            case "updated":
+              return (
+                new Date(
+                  b.updated_at
+                ).getTime() -
+                new Date(
+                  a.updated_at
+                ).getTime()
+              );
+
+            case "stars":
+            default:
+              return (
+                b.stargazers_count -
+                a.stargazers_count
+              );
           }
-        )
-      : [];
+
+        }
+      );
+
+    }, [
+      data?.repos,
+      sortBy,
+    ]);
 
   return (
     <div className="min-h-screen bg-slate-100">
+
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 py-14 mb-10">
         <div className="max-w-6xl mx-auto px-4 text-center">
+
           <h1 className="text-5xl font-bold text-white">
             GitHub Repo Explorer
           </h1>
@@ -93,33 +173,95 @@ function HomePage() {
           <p className="text-slate-300 mt-4">
             Explore GitHub profiles and repositories
           </p>
+
         </div>
       </div>
 
-      {/* Content */}
       <div className="max-w-6xl mx-auto px-4 pb-10">
 
         <SearchBar
-          onSearch={handleSearch}
-          loading={loading}
+          onSearch={(username) => {
+            setSearchSource(
+              "manual"
+            );
+
+            handleSearch(
+              username
+            );
+          }}
+          loading={
+            loading &&
+            searchSource ===
+              "manual"
+          }
         />
 
-        {/* Error State */}
+        <RecentSearches
+          searches={
+            recentSearches
+          }
+          onSelect={(
+            username
+          ) => {
+            setSearchSource(
+              "recent"
+            );
+
+            handleSearch(
+              username
+            );
+          }}
+          onClear={
+            clearSearchHistory
+          }
+        />
+
         {error && (
           <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded-xl mb-6">
             {error}
           </div>
         )}
 
-        {/* Loading State */}
+        {/* Lightweight loading indicator */}
         {loading && (
-          <div className="text-center text-lg py-10">
-            Loading profile...
+          <div className="flex justify-center items-center gap-3 py-4">
+
+            <div
+              className="
+                h-5
+                w-5
+                animate-spin
+                rounded-full
+                border-2
+                border-slate-300
+                border-t-slate-900
+              "
+            />
+
+            <span className="text-slate-600">
+              Loading latest profile...
+            </span>
+
           </div>
         )}
 
-        {/* Data */}
-        {!loading && data && (
+        {!loading &&
+          !error &&
+          !data && (
+            <div className="text-center py-20">
+
+              <h2 className="text-2xl font-semibold text-slate-700">
+                Search for a GitHub User
+              </h2>
+
+              <p className="text-slate-500 mt-2">
+                Enter a username above to explore repositories.
+              </p>
+
+            </div>
+          )}
+
+        {data && (
           <>
             <ProfileCard
               user={data.user}
@@ -133,7 +275,9 @@ function HomePage() {
                 </h2>
 
                 <p className="text-gray-500">
-                  {data.repos.length} repositories found
+                  {data.repos.length}
+                  {" "}
+                  repositories found
                 </p>
               </div>
 
@@ -147,7 +291,8 @@ function HomePage() {
                   value={sortBy}
                   onChange={(e) =>
                     setSortBy(
-                      e.target.value
+                      e.target
+                        .value as SortOption
                     )
                   }
                   className="
@@ -177,6 +322,7 @@ function HomePage() {
                 </select>
 
               </div>
+
             </div>
 
             <RepositoryList
@@ -185,20 +331,6 @@ function HomePage() {
           </>
         )}
 
-        {/* Empty State */}
-        {!loading &&
-          !error &&
-          !data && (
-            <div className="text-center py-20">
-              <h2 className="text-2xl font-semibold text-slate-700">
-                Search for a GitHub User
-              </h2>
-
-              <p className="text-slate-500 mt-2">
-                Enter a username above to explore repositories.
-              </p>
-            </div>
-          )}
       </div>
     </div>
   );
