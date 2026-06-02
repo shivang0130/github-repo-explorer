@@ -15,6 +15,9 @@ export interface GitHubRepo {
   language: string | null;
   stargazers_count: number;
   updated_at: string;
+  owner: {
+    login: string;
+  };
 }
 
 export interface GitHubResponse {

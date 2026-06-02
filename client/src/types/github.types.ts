@@ -15,9 +15,21 @@ export interface GitHubRepo {
   language: string | null;
   stargazers_count: number;
   updated_at: string;
+
+  owner: {
+    login: string;
+  };
 }
 
 export interface GitHubResponse {
   user: GitHubUser;
   repos: GitHubRepo[];
+}
+
+export interface GitHubRepoDetails {
+  open_issues_count: number;
+  forks_count: number;
+  default_branch: string;
+  visibility: string;
+  created_at: string;
 }
