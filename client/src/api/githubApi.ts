@@ -2,7 +2,8 @@ import axios from "axios";
 import type { GitHubResponse } from "../types/github.types";
 
 const API_URL =
-  "http://localhost:5000/api/github";
+  import.meta.env.VITE_API_URL +
+  "/api/github";
 
 export const getGitHubProfile =
   async (
