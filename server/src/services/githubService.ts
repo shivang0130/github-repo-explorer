@@ -8,6 +8,10 @@ import {
   GitHubRepo,
 } from "../types/github.types";
 
+const githubHeaders = {
+  Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+};
+
 export const fetchGitHubData =
   async (
     username: string
@@ -36,13 +40,20 @@ export const fetchGitHubData =
 
     const userResponse =
       await axios.get<GitHubUser>(
-        `https://api.github.com/users/${username}`
+        `https://api.github.com/users/${username}`,
+        {
+          headers:
+            githubHeaders,
+        }
       );
 
     const repoResponse =
       await axios.get<GitHubRepo[]>(
         `https://api.github.com/users/${username}/repos`,
         {
+          headers:
+            githubHeaders,
+
           params: {
             per_page: 100,
             sort: "updated",
@@ -63,17 +74,18 @@ export const fetchGitHubData =
     return data;
   };
 
-
-
 export const fetchUserSuggestions =
   async (
     query: string
-  ) => {
+  ): Promise<string[]> => {
 
     const response =
       await axios.get(
         "https://api.github.com/search/users",
         {
+          headers:
+            githubHeaders,
+
           params: {
             q: query,
             per_page: 5,
