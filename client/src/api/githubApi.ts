@@ -16,3 +16,16 @@ export const getGitHubProfile =
 
     return response.data;
   };
+
+export const getGitHubSuggestions =
+  async (
+    query: string
+  ): Promise<string[]> => {
+
+    const response =
+      await axios.get<string[]>(
+        `${API_URL}/suggestions/${query}`
+      );
+
+    return response.data;
+  };

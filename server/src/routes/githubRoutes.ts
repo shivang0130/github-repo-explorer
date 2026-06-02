@@ -1,8 +1,16 @@
 import { Router } from "express";
-import { getGitHubProfile } from "../controllers/githubController";
+import { getGitHubProfile, getGitHubSuggestions } from "../controllers/githubController";
 
 const router = Router();
 
-router.get("/:username", getGitHubProfile);
+router.get(
+  "/suggestions/:query",
+  getGitHubSuggestions
+);
+
+router.get(
+  "/:username",
+  getGitHubProfile
+);
 
 export default router;

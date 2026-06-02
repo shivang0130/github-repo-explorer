@@ -62,3 +62,30 @@ export const fetchGitHubData =
 
     return data;
   };
+
+
+
+export const fetchUserSuggestions =
+  async (
+    query: string
+  ) => {
+
+    const response =
+      await axios.get(
+        "https://api.github.com/search/users",
+        {
+          params: {
+            q: query,
+            per_page: 5,
+          },
+        }
+      );
+
+    return response.data.items.map(
+      (
+        user: {
+          login: string;
+        }
+      ) => user.login
+    );
+  };

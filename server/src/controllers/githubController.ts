@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import axios from "axios";
-import { fetchGitHubData } from "../services/githubService";
+import { fetchGitHubData, fetchUserSuggestions } from "../services/githubService";
 
 interface GitHubParams {
   username: string;
@@ -64,3 +64,42 @@ export const getGitHubProfile = async (
 
   }
 };
+
+
+
+interface SuggestionParams {
+  query: string;
+}
+
+export const getGitHubSuggestions =
+  async (
+    req: Request<SuggestionParams>,
+    res: Response
+  ): Promise<void> => {
+
+    try {
+
+      const {
+        query,
+      } = req.params;
+
+      const suggestions =
+        await fetchUserSuggestions(
+          query
+        );
+
+      res.status(200).json(
+        suggestions
+      );
+
+    } catch {
+
+      res.status(500).json({
+        success: false,
+        message:
+          "Failed to fetch suggestions",
+      });
+
+    }
+
+  };
