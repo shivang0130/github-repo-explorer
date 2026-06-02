@@ -1,11 +1,3 @@
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-
 import type {
   GitHubRepo,
 } from "../types/github.types";
@@ -13,15 +5,6 @@ import type {
 interface Props {
   repos: GitHubRepo[];
 }
-
-const COLORS = [
-  "#2563eb",
-  "#7c3aed",
-  "#059669",
-  "#dc2626",
-  "#ea580c",
-  "#0891b2",
-];
 
 function LanguageChart({
   repos,
@@ -46,15 +29,36 @@ function LanguageChart({
 
   });
 
+  const totalRepos =
+    Object.values(
+      languageMap
+    ).reduce(
+      (sum, count) =>
+        sum + count,
+      0
+    );
+
   const chartData =
     Object.entries(
       languageMap
-    ).map(
-      ([name, value]) => ({
-        name,
-        value,
-      })
-    );
+    )
+      .map(
+        ([name, value]) => ({
+          name,
+          value,
+          percentage:
+            (
+              (value /
+                totalRepos) *
+              100
+            ).toFixed(1),
+        })
+      )
+      .sort(
+        (a, b) =>
+          b.value - a.value
+      )
+      .slice(0, 6);
 
   if (
     chartData.length === 0
@@ -65,66 +69,147 @@ function LanguageChart({
   return (
     <div
       className="
-      bg-white
-      rounded-2xl
-      shadow-md
-      p-6
-      mb-8
+        bg-white
+        rounded-3xl
+        shadow-lg
+        p-6
+        mb-8
+        border
+        border-gray-100
       "
     >
-      <h2
-        className="
-        text-2xl
-        font-bold
-        mb-6
-        "
-      >
-        Language Distribution
-      </h2>
 
-      <div
-        className="
-        h-80
-        "
-      >
-        <ResponsiveContainer
-          width="100%"
-          height="100%"
+      <div className="flex justify-between items-center mb-6">
+
+        <div>
+
+          <h2
+            className="
+              text-2xl
+              font-bold
+              text-slate-900
+            "
+          >
+            Language Distribution
+          </h2>
+
+          <p
+            className="
+              text-sm
+              text-gray-500
+              mt-1
+            "
+          >
+            Based on public repositories
+          </p>
+
+        </div>
+
+        <div
+          className="
+            bg-slate-900
+            text-white
+            px-4
+            py-2
+            rounded-full
+            text-sm
+            font-medium
+          "
         >
-          <PieChart>
+          {totalRepos} Repos
+        </div>
 
-            <Pie
-              data={chartData}
-              dataKey="value"
-              nameKey="name"
-              outerRadius={120}
-              label
+      </div>
+
+      <div className="space-y-5">
+
+        {chartData.map(
+          (language) => (
+
+            <div
+              key={
+                language.name
+              }
             >
 
-              {chartData.map(
-                (
-                  _,
-                  index
-                ) => (
-                  <Cell
-                    key={index}
-                    fill={
-                      COLORS[
-                        index %
-                          COLORS.length
-                      ]
+              <div className="flex justify-between mb-2">
+
+                <div>
+
+                  <span
+                    className="
+                      font-semibold
+                      text-slate-800
+                    "
+                  >
+                    {
+                      language.name
                     }
-                  />
-                )
-              )}
+                  </span>
 
-            </Pie>
+                  <span
+                    className="
+                      text-gray-500
+                      text-sm
+                      ml-2
+                    "
+                  >
+                    (
+                    {
+                      language.value
+                    }{" "}
+                    repos)
+                  </span>
 
-            <Tooltip />
+                </div>
 
-          </PieChart>
-        </ResponsiveContainer>
+                <span
+                  className="
+                    font-medium
+                    text-slate-700
+                  "
+                >
+                  {
+                    language.percentage
+                  }
+                  %
+                </span>
+
+              </div>
+
+              <div
+                className="
+                  h-3
+                  bg-slate-200
+                  rounded-full
+                  overflow-hidden
+                "
+              >
+
+                <div
+                  className="
+                    h-full
+                    rounded-full
+                    bg-gradient-to-r
+                    from-slate-900
+                    via-slate-700
+                    to-slate-500
+                  "
+                  style={{
+                    width:
+                      `${language.percentage}%`,
+                  }}
+                />
+
+              </div>
+
+            </div>
+
+          )
+        )}
+
       </div>
+
     </div>
   );
 }
